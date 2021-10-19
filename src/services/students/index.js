@@ -12,6 +12,7 @@ import express from "express" // 3RD PARTY MODULE (does need to be installed)
 import fs from "fs" // CORE MODULE (doesn't need to be installed)
 import { fileURLToPath } from "url" // CORE MODULE (doesn't need to be installed)
 import { dirname, join } from "path" // CORE MODULE (doesn't need to be installed)
+import uniqid from "uniqid" // 3RD PARTY MODULE (does need to be installed)
 
 const studentsRouter = express.Router() // a Router is a set of endpoints that share something like a prefix (studentsRouter is going to share /students as a prefix)
 
@@ -26,8 +27,25 @@ const studentsJSONPath = join(parentFolderPath, "students.json") // DO NOT EVER 
 // 1.
 studentsRouter.post("/", (req, res) => {
   // First parameter is relative URL, second parameter is the REQUEST HANDLER
-  console.log("REQUEST METHOD: ", req.method)
-  res.send("HELLO WORLD I'M THE POST ROUTE")
+
+  // 1. Read the request body obtaining the new student's data
+  console.log(req.body)
+
+  const newStudent = { ...req.body, createdAt: new Date(), id: uniqid() }
+  console.log(newStudent)
+
+  // 2. Read the file content obtaining the students array
+  const students = JSON.parse(fs.readFileSync(studentsJSONPath))
+
+  // 3. Add new student to the array
+  students.push(newStudent)
+
+  // 4. Write the array back to the file
+  fs.writeFileSync(studentsJSONPath, JSON.stringify(students))
+
+  // 5. Send back a proper response
+
+  res.status(201).send({ id: newStudent.id })
 })
 
 // 2.
@@ -60,14 +78,37 @@ studentsRouter.get("/:studentId", (req, res) => {
 
 // 4.
 studentsRouter.put("/:studentId", (req, res) => {
-  console.log("REQUEST METHOD: ", req.method)
-  res.send("HELLO WORLD I'M THE PUT ROUTE")
+  // 1. Read students.json obtaining an array of students
+  const students = JSON.parse(fs.readFileSync(studentsJSONPath))
+
+  // 2. Modify the specified student
+  const index = students.findIndex(student => student.id === req.params.studentId)
+
+  const updatedStudent = { ...students[index], ...req.body }
+
+  students[index] = updatedStudent
+
+  // 3. Save the file with updated list of students
+  fs.writeFileSync(studentsJSONPath, JSON.stringify(students))
+
+  // 4. Send back a proper response
+
+  res.send(updatedStudent)
 })
 
 // 5.
 studentsRouter.delete("/:studentId", (req, res) => {
-  console.log("REQUEST METHOD: ", req.method)
-  res.send("HELLO WORLD I'M THE DELETE ROUTE")
+  // 1. Read students.json obtaining an array of students
+  const students = JSON.parse(fs.readFileSync(studentsJSONPath))
+
+  // 2. Filter out the specified student from the array, keeping just the remaining students
+  const remainingStudents = students.filter(student => student.id !== req.params.studentId) // ! = =
+
+  // 3. Save the remaining students into students.json file again
+  fs.writeFileSync(studentsJSONPath, JSON.stringify(remainingStudents))
+
+  // 4. Send back a proper response
+  res.status(204).send()
 })
 
 // studentsRouter.get("/whatever", (req, res) => {})
