@@ -3,8 +3,8 @@ import express from "express" // NEW IMPORT SYNTAX (remember to add type: "modul
 
 const server = express()
 
-const port = 3002
+const port = 3001
 
 server.listen(port, () => {
-  console.log("Server running on port: ", port)
+  console.log("Server running on port:", port)
 })
